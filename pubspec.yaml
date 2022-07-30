@@ -39,6 +39,7 @@ dependencies:
   firebase_database: ^9.0.20
   cloud_firestore: ^3.4.2
   intl: ^0.17.0
+  toast: ^0.3.0
 
 dev_dependencies:
   flutter_test:

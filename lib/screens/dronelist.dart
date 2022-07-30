@@ -4,6 +4,7 @@ import 'package:droneapp/widgets/inputWidget.dart';
 import 'package:droneapp/widgets/reusable_button.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:droneapp/services/database.dart';
 
 class DronTechList extends StatefulWidget {
   DronTechList({Key? key}) : super(key: key);
@@ -22,6 +23,7 @@ class _DronTechListState extends State<DronTechList> {
   TextEditingController droneWeight = TextEditingController();
   TextEditingController droneManufacturer = TextEditingController();
   final droneDatabase = FirebaseFirestore.instance;
+  DbAservice dbs = new DbAservice();
   @override
   void initState() {
     super.initState();
@@ -42,9 +44,15 @@ class _DronTechListState extends State<DronTechList> {
     return Scaffold(
       appBar: AppBar(title: Text('Drone List')),
       body: SafeArea(
+          //Creates a widget that builds itself based on the latest snapshot of interaction with a [Future].
+//The [builder] must not be null.
           child: FutureBuilder<QuerySnapshot>(
               future: droneDatabase.collection('Drones').get(),
               builder: (context, snapshot) {
+                //snapshot.hasData below Returns whether this snapshot contains a non-null [data] value.
+//This can be false even when the asynchronous computation has completed successfully,
+// if the computation did not return a non-null value. For example,
+//a [Future] will complete with the null value even if it completes successfully.
                 if (snapshot.hasData) {
                   final List<DocumentSnapshot> arrData = snapshot.data!.docs;
                   return ListView(
@@ -58,28 +66,36 @@ class _DronTechListState extends State<DronTechList> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
+                                //Using interpolation to compose droneTag field and it values from firebase.
                                 "Drone Tag: " + data['droneTag'],
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 18),
                               ),
                               Text(
+                                //Using interpolation to compose droneManufacturer field and it values from firebase.
                                 "Drone Manufacturer: " +
                                     data['droneManufacturer'],
                                 style: TextStyle(
                                     fontWeight: FontWeight.w300, fontSize: 14),
                               ),
                               Text(
+                                //Using interpolation to compose droneService field and it values from firebase.
+
                                 "Status: " + data['droneService'],
                                 style: TextStyle(
                                     fontWeight: FontWeight.w300, fontSize: 14),
                               ),
                               Text(
+                                //Using interpolation to compose dateManufactured field and it values from firebase.
+
                                 "Manufactured Date: " +
                                     data['dateManufactured'],
                                 style: TextStyle(
                                     fontWeight: FontWeight.w300, fontSize: 14),
                               ),
                               Text(
+                                //Using interpolation to compose droneWeight field and it values from firebase.
+
                                 "Drone Weight: " + data['droneWeight'],
                                 style: TextStyle(
                                     fontWeight: FontWeight.w300, fontSize: 14),
@@ -88,6 +104,7 @@ class _DronTechListState extends State<DronTechList> {
                           ),
                         ),
                       );
+                      //Creating a [List] containing the elements of this [Iterable].
                     }).toList(),
                   );
                   // return Text("Data found");
@@ -95,11 +112,14 @@ class _DronTechListState extends State<DronTechList> {
                   return Text("Data not found");
                 }
               })),
+      //  A button displayed floating above [body], in the bottom right corner in
+      // this context it is used to display and modelsheet for adding of data
       floatingActionButton: FloatingActionButton(
         backgroundColor: floatActionBtnBgcolor,
         onPressed: () {
           showModalBottomSheet<void>(
-              // backgroundColor: defaultTextColor,
+              //A modal bottom sheet is an alternative to a menu or a dialog and prevents the user from interacting with the rest of the app.
+              //in this context it is used to display a menu dialog to add  new drones
               isScrollControlled: true,
               elevation: 30,
               context: context,
@@ -116,6 +136,7 @@ class _DronTechListState extends State<DronTechList> {
                           SizedBox(
                             height: 10,
                           ),
+                          //reusable input fields for drone ID
                           InpuTextField(
                             hintTexts: 'Enter Drone ID',
                             controller: droneId,
@@ -124,6 +145,7 @@ class _DronTechListState extends State<DronTechList> {
                           SizedBox(
                             height: 10,
                           ),
+                          //reusable input fields for drone weight
                           InpuTextField(
                             hintTexts: 'Enter Drone Weight',
                             controller: droneWeight,
@@ -132,6 +154,7 @@ class _DronTechListState extends State<DronTechList> {
                           SizedBox(
                             height: 10,
                           ),
+                          //reusable input fields for drone manufacturer
                           InpuTextField(
                             hintTexts: 'Enter Drone Manufacturer',
                             controller: droneManufacturer,
@@ -140,6 +163,7 @@ class _DronTechListState extends State<DronTechList> {
                           SizedBox(
                             height: 10,
                           ),
+                          //Radio button list tile widget for Serviced or not serviced status of the drones
                           ListTile(
                             title: Text('Serviced'),
                             leading: Radio<Status>(
@@ -155,6 +179,7 @@ class _DronTechListState extends State<DronTechList> {
                           ),
                           ListTile(
                             title: Text('Not Serviced'),
+                            //serviced radio button
                             leading: Radio<Status>(
                                 activeColor: Colors.green,
                                 value: Status.notserviced,
@@ -206,13 +231,13 @@ class _DronTechListState extends State<DronTechList> {
                           ),
                           ReUsableBtn(
                             btnText: "Submit",
-                            onPress: () async {
+                            onPress: () {
                               if (droneId.text.isNotEmpty &&
                                   droneDate.text.isNotEmpty &&
                                   droneManufacturer.text.isNotEmpty &&
                                   _serviced.name.isNotEmpty &&
                                   droneWeight.text.isNotEmpty) {
-                                _insertDroneData(
+                                dbs.insertDroneData(
                                     droneId.text,
                                     droneManufacturer.text,
                                     _serviced.name,
@@ -241,24 +266,5 @@ class _DronTechListState extends State<DronTechList> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
-  }
-
-  void _insertDroneData(
-    String droneId,
-    String droneManufacturer,
-    String droneService,
-    String dateManufactured,
-    String droneWeight,
-  ) {
-    droneDatabase.collection("Drones").add({
-      "droneTag": droneId,
-      "droneManufacturer": droneManufacturer,
-      "droneService": droneService,
-      "dateManufactured": dateManufactured,
-      "droneWeight": droneWeight,
-    }).then((value) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Data Added')));
-    });
   }
 }
